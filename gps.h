@@ -62,10 +62,10 @@ private:
   string mode_; // A=autonomous,D=differential,E=estimated
   string date_; // ddmmyy
   string time_; // hhmmss.sss
-  string latitude_; // ddmm.mmmmN
-  string longitude_; // dddmm.mmmmW
-  string course_; // course over ground in degrees
-  string velocity_; // velocity over ground in knots
+  double latitude_; // ddmm.mmmmN
+  double longitude_; // dddmm.mmmmW
+  double course_; // course over ground in degrees
+  double velocity_; // velocity over ground in knots
   string magnetic_variation_; // magnetic variation measured in degrees
 };
 

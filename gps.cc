@@ -21,10 +21,10 @@ GPS::GPS(void) {
   mode_ = "";
   date_ = "";
   time_ = "";
-  latitude_ = "";
-  longitude_ = "";
-  course_ = "";
-  velocity_ = "";
+  latitude_ = 0.0;
+  longitude_ = 0.0;
+  course_ = 0.0;
+  velocity_ = 0.0;
   magnetic_variation_ = "";
 }
 
@@ -35,55 +35,19 @@ bool GPS::Init(void) {
   return setup_status == 0;
 }
 
-void GPS::StoreNMEA(string nmea) {
-  if (!ValidateNMEA(nmea)) {
-    cout << "nmea string checksum failed: " << nmea << endl;
-    return;
-  }
-    
-  vector<string> nmea_vector = SplitNMEA(nmea);
-
-  if (nmea_vector[0].compare("$GPRMC") == 0)
-    StoreRMC(nmea_vector);
-}
-
-vector<string> GPS::SplitNMEA(string nmea) {
-  vector<string> split_nmea;
-
-  while (nmea.find(",") != string::npos) {
-    split_nmea.push_back(nmea.substr(0, nmea.find(",")));
-    nmea.erase(0, nmea.find(",")+1);
-  }
-  split_nmea.push_back(nmea.substr(0, nmea.find("*")));
-
-  return split_nmea;
-}
-
-bool GPS::ValidateNMEA(string nmea) {
-  unsigned int xfer_checksum;
-  stringstream ss;
-  ss << std::hex << nmea.substr(nmea.find("*",1)+1, 2);
-  ss >> xfer_checksum;
-
-  unsigned int calc_checksum = 0;
-  for (unsigned int c = 1; c < nmea.length(); c++) {
-    if (nmea[c] == '*') break;
-    calc_checksum ^= nmea[c] & 0xff;
-  }
-  
-  return xfer_checksum == calc_checksum;
-}
-
 void GPS::StoreRMC(vector<string> sentence) {
   time_ = sentence[1];
   time_ = time_.substr(0,2) + ":" + time_.substr(2,2) +
     ":" + time_.substr(4,2);
   
   status_ = sentence[2];
-  latitude_ = sentence[3] + sentence[4];
-  longitude_ = sentence[5] + sentence[6];
-  velocity_ = sentence[7];
-  course_ = sentence[8];
+  latitude_ = strtod(sentence[3].c_str(), NULL);
+  if (sentence[4].compare("S") == 0) latitude_ *= -1;
+  longitude_ = strtod(sentence[5].c_str(), NULL);
+  if (sentence[6].compare("W") == 0) longitude_ *= -1;
+  
+  velocity_ = strtod(sentence[7].c_str(), NULL);
+  course_ = strtod(sentence[8].c_str(), NULL);
 
   date_ = sentence[9];
   date_ = date_.substr(2,2) + "/" + date_.substr(0,2) + 
@@ -102,7 +66,7 @@ void GPS::PrintRMC(void) {
     cout << "  mode: " << mode_ << endl;
     cout << "  " << date_ << " " << time_ << endl;
     if (!status_.compare("A")) {
-      cout << "  lat,lon: " << latitude_ << "," << longitude_ << endl;
+      cout << "  lat,lon: " << latitude_ << ", " << longitude_ << endl;
       cout << "  velocity: " << velocity_ << "knots";
       cout << "  course: " << course_ << "deg" << endl;
       cout << "  magnetic variation: " << magnetic_variation_ << "deg" << endl;
